@@ -2,6 +2,7 @@ import User from "./../models/userSchema.js";
 import ApiFeatures from "../utils/apiFeatures.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
+import * as Factory from "./handlerFactory.js";
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -11,35 +12,12 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
-export const getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
-  if (!users) {
-    return next(new AppError("No users found", 404));
-  }
+export const getAllUsers = Factory.getAll(User);
 
-  res.status(201).json({
-    status: "success",
-    message: "User created successfully",
-    users,
-  });
-});
-
-export const getUser = catchAsync(async (req, res, next) => {
-  const newUser = await User.findById(req.params.id);
-  /* Checking if the user is created or not. If not, it will throw an error. */
-  if (!newUser) {
-    return next(new AppError("No user found", 404));
-  }
-
-  res.status(201).json({
-    status: "success",
-    message: "User created successfully",
-    data: newUser,
-  });
-});
+export const getUser = Factory.getOne(User);
 
 export const dynamicQuery = catchAsync(async (req, res, next) => {
-  console.log(req.query);
+  // [gte]console.log(req.query);
   const features = new ApiFeatures(User.find(), req.query)
     .filter()
     .sort()
@@ -110,3 +88,21 @@ export const deleteMe = catchAsync(async (req, res, next) => {
     message: "User deleted successfully",
   });
 });
+
+export const setUserID = (req, res, next) => {
+  if (!req.params.id) req.params.id = req.user.id;
+  next();
+};
+
+//Pass the virtual field to be populated in popOptions
+export const getMe = Factory.getOne(User, {
+  path: "myEvents",
+  select: "name -participants",
+});
+
+export const setEventId = (req, res, next) => {
+  req.query.formerEvents = req.params.eventId;
+  next();
+};
+
+export const getParticipantNames = Factory.getAll(User);

@@ -1,8 +1,11 @@
 import express from "express";
 import * as userController from "../controllers/userController.js";
 import * as authController from "../controllers/authController.js";
-const router = express.Router();
 
+//Enabling merge params to get the paramters in a nested route
+const router = express.Router({
+  mergeParams: true,
+});
 router
   .route("/")
   .get(authController.protect, userController.getAllUsers)
@@ -25,6 +28,12 @@ router
 router
   .route("/aggregate")
   .get(authController.protect, userController.aggregateQuery);
+router
+  .route("/getMe")
+  .get(authController.protect, userController.setUserID, userController.getMe);
+router
+  .route("/participants")
+  .get(authController.protect,userController.setEventId, userController.getParticipantNames);
 router
   .route("/:id")
   .get(

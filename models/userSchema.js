@@ -37,6 +37,13 @@ const userSchema = new mongoose.Schema(
         message: "Invalid role",
       },
     },
+    formerEvents: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
+        default: undefined,
+      },
+    ],
     password: {
       type: String,
       required: [true, "Please provide a password"],
@@ -72,20 +79,32 @@ userSchema.methods.correctPassword = async function (
   userPassword
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
-}
+};
 
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
-  if(this.passwordChangedAt) {
-    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
     return JWTTimestamp < changedTimestamp;
   }
   //Password not changed
   return false;
-}
+};
 
 //set virtual property..i.e will not be stored in db but will be returned to user
 userSchema.virtual("type").get(function () {
   return this.age > 21 ? "ADULT" : "TEENAGER";
+});
+
+//Virtual field with populate
+userSchema.virtual("myEvents", {
+  ref: "events",
+  //Foreign field is that field which contains the local field
+  //which links this model to the other model
+  foreignField: "participants",
+  localField: "_id",
 });
 
 //Document Middleware: Runs before save() or create()
@@ -99,7 +118,7 @@ userSchema.pre("save", async function (next) {
 
 //Document Middleware: Runs after save() or create()
 userSchema.post("save", function (doc, next) {
-  console.log(doc);
+  // console.log(doc);
   next();
 });
 
@@ -113,7 +132,7 @@ userSchema.pre(/^find/, function (next) {
 //Query Middleware: after a query is executed
 userSchema.post(/^find/, function (docs, next) {
   console.log(`Time taken to execute query: ${Date.now() - this.start}`);
-  console.log(docs);
+  docs;
   next();
 });
 

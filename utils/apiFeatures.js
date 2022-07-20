@@ -5,11 +5,13 @@ export default class ApiFeatures {
   }
   //advanced way for fields filtering
   filter() {
+    // console.log(this.query);
     const queryObj = { ...this.query };
     const excludedFields = ["page", "sort", "limit", "fields"];
     excludedFields.forEach((el) => delete queryObj[el]);
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    // console.log(queryStr);
     this.dbQuery.find(JSON.parse(queryStr));
     return this;
   }

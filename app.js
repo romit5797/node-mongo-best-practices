@@ -1,5 +1,6 @@
 import express from "express";
 import userRouter from "./routes/userRouter.js";
+import eventRouter from "./routes/eventRouter.js";
 import dotenv from "dotenv";
 import appError from "./utils/appError.js";
 import globalErrorHandler from "./controllers/errorController.js";
@@ -8,8 +9,22 @@ import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean";
 import hpp from "hpp";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+import compression from "compression";
 dotenv.config({ path: "./config.env" });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
+
+app.enable("trust proxy");
+
+// app.set("view engine", "pug");
+app.set("views", path.join(__dirname, "./views"));
+
+//Serve static files
+app.use(express.static(path.join(__dirname, "public")));
 
 //add rate limit to the app to prevent dos attack
 const limiter = rateLimit({
@@ -34,7 +49,19 @@ app.use(
   })
 );
 
+//This is will only compress all the text data sent to client
+app.use(compression());
+
+//This middleware will enable cross origin resource sharing
+app.use(cors());
+
+//This responds to another http method
+//It responds to options sent by browser in PreFlight phase
+//without this browser will not allow operations like patch, delete, etc
+app.options("*", cors());
+
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/events", eventRouter);
 
 //Midleware to handle undefined routes
 app.all("*", (req, res, next) => {

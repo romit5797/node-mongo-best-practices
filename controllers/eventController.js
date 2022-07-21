@@ -87,3 +87,71 @@ export const getParticipantNames = catchAsync(async (req, res, next) => {
     data: event.participants,
   });
 });
+
+export const getByScore = catchAsync(async (req, res, next) => {
+  const event = await Event.aggregate([
+    { 
+      //Create array of number
+      $project: {
+        durationArray: {
+          //Map generates a modifid array from input array
+          $map: {
+            //input expects an array
+            input: {
+              //generate an array of equal to length of string
+              $range: [
+                0,
+                {
+                  $strLenCP: { $toString: "$duration" },
+                },
+              ],
+            },
+            //since no as is specified then default is this
+            //in will return the new modified element of the array
+            in: {
+              //returns a substring from parent string based on the index and no. of characters to be selected
+              $toInt: { $substrCP: [{ $toString: "$duration" }, "$$this", 1] },
+            },
+          },
+        },
+        
+       
+      },
+    },
+    //add array of numbers
+    {
+      $project: {
+         total: { $sum: "$durationArray"} ,
+      }
+    },
+    // {
+    //   $project: {
+    //     du: { $toString: "$duration" },
+    //   },
+    // },
+    // {
+    //   $project: {
+    //     d: { $split: ["$du", ""] },
+    //   },
+    // },
+    // -------OR UNWIND AND SUM ON GROUP--------------
+    // { $unwind: "$durationArray" },
+    // {
+    //   $group: {
+    //     _id: "$_id",
+    //     sumOfDigits: { $sum: "$durationArray" },
+    //   },
+    // },
+    // { $sort: { total_qty: -1 } },
+  ]);
+
+  // console.log(event);
+  if (!event) {
+    return next(new AppError("No event found with the this score", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: event,
+  });
+});

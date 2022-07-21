@@ -19,6 +19,8 @@ router
   .route("/delete")
   .delete(authController.protect, eventController.deleteEvent);
 
+router.route("/score").get(eventController.getByScore);
+
 //Testing power of indexes in this route
 router
   .route("/startDate/:date")
